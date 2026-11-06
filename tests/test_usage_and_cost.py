@@ -67,11 +67,31 @@ def test_usage_prefers_the_key_hermes_passes(profile, network, secrets):
     assert network.requests[0]["headers"]["authorization"] == "Bearer sk-passed"
 
 
-def test_usage_uses_the_configured_base_url_not_the_runtime_one(profile, network, secrets):
-    # On the Anthropic wire the runtime base_url has lost its /v1.
-    secrets.update(LLMAPI_API_KEY="sk-test", LLMAPI_BASE_URL="https://api.dev.llmapi.ai/v1/")
-    network.routes["https://api.dev.llmapi.ai/v1/credits"] = credits()
-    assert profile.fetch_account_usage(base_url="https://api.dev.llmapi.ai") is not None
+@pytest.mark.parametrize(
+    ("passed", "env", "expected"),
+    [
+        # The credential's own gateway; on the Anthropic wire Hermes passes it without /v1.
+        ("https://eu.api.llmapi.ai", None, "https://eu.api.llmapi.ai/v1/credits"),
+        ("https://eu.api.llmapi.ai/v1/", "https://api.dev.llmapi.ai/v1", "https://eu.api.llmapi.ai/v1/credits"),
+        # `hermes usage` passes nothing: LLMAPI_BASE_URL, else the hosted gateway.
+        (None, "https://api.dev.llmapi.ai/v1/", "https://api.dev.llmapi.ai/v1/credits"),
+        (None, None, CREDITS_URL),
+    ],
+)
+def test_usage_asks_the_credentials_gateway(profile, network, secrets, passed, env, expected):
+    secrets["LLMAPI_API_KEY"] = "sk-test"
+    if env:
+        secrets["LLMAPI_BASE_URL"] = env
+    network.routes[expected] = credits()
+    assert profile.fetch_account_usage(base_url=passed) is not None
+    assert network.requests[0]["url"] == expected
+
+
+def test_usage_shows_a_negative_balance(profile, network, secrets):
+    secrets["LLMAPI_API_KEY"] = "sk-test"
+    network.routes[CREDITS_URL] = credits(mode="payg", credits=-42.1, total_credits=-42.1)
+    snapshot = profile.fetch_account_usage()
+    assert snapshot.details[0] == "Credits balance: -$42.10"
 
 
 def test_usage_without_a_key_makes_no_request(profile, network):
@@ -123,3 +143,46 @@ def test_cache_write_falls_back_to_the_prompt_price(warm, profile):
 
 def test_cost_unknown_model_defers(warm, profile):
     assert profile.get_usage_cost("not-a-model", CanonicalUsage(input_tokens=10)) is None
+
+
+def test_the_key_never_follows_a_redirect(plugin):
+    """A redirect must not carry Authorization to another host: the plugin's opener refuses it."""
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    hits = []
+
+    class Elsewhere(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            hits.append(self.headers.get("Authorization"))
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    other = ThreadingHTTPServer(("127.0.0.1", 0), Elsewhere)
+
+    class Redirect(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            self.send_response(302)
+            self.send_header("Location", f"http://127.0.0.1:{other.server_address[1]}/steal")
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    first = ThreadingHTTPServer(("127.0.0.1", 0), Redirect)
+    for server in (first, other):
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+    opener = plugin.urllib.request.build_opener(plugin._NoRedirect)
+    plugin._OPENER = opener
+    try:
+        with pytest.raises(urllib.error.HTTPError) as caught:
+            plugin._get_json(f"http://127.0.0.1:{first.server_address[1]}/v1/credits", timeout=5, api_key="sk-x")
+        assert caught.value.code == 302
+        assert hits == []
+    finally:
+        for server in (first, other):
+            server.shutdown()
+            server.server_close()

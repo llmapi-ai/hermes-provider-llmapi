@@ -26,10 +26,18 @@ BLOCKED = {"reason": "auth_permanent", "retryable": False, "should_fallback": Fa
         (403, "organization_blocked", BLOCKED),
         (403, "key_suspended_abuse", BLOCKED),
         (401, "api_key_expired", BLOCKED),
-        (429, "rate_limit_exceeded", {"reason": "rate_limit", "retryable": True}),
         (503, "pool_exhausted", {"reason": "overloaded", "retryable": True}),
         (503, "billing_unavailable", {"reason": "server_error", "retryable": True}),
         (402, "INSUFFICIENT_CREDITS", BILLING),
+        (403, "coding_model_requires_credits", BILLING),
+        (403, "email_verification_required", NOT_ENTITLED),
+        (400, "provider_key_required", NOT_ENTITLED),
+        (503, "provider_unavailable", NOT_ENTITLED),
+        (
+            400,
+            "provider_no_responses_binding",
+            {"reason": "model_not_found", "retryable": False, "should_fallback": True},
+        ),
     ],
 )
 def test_gateway_codes(profile, status, code, expected):
@@ -44,6 +52,7 @@ def test_gateway_codes(profile, status, code, expected):
     ("status", "code"),
     [
         (401, "invalid_api_key"),  # Hermes' own auth guidance
+        (429, "rate_limit_exceeded"),  # Hermes backs off, then rotates or falls back
         (404, "model_not_found"),  # Hermes' own model_not_found handling
         (500, "upstream_error"),
         (400, None),

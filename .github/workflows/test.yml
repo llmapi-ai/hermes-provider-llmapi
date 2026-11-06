@@ -28,6 +28,17 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest -v
 
+  live-catalog:
+    name: live catalog (curated models still live)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --group dev
+      - run: uv run pytest -v tests/test_live_catalog.py
+        env:
+          LLMAPI_LIVE_CATALOG: "1"
+
   hermes:
     name: end-to-end (Hermes ${{ matrix.ref }})
     runs-on: ubuntu-latest

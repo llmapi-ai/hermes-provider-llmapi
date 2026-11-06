@@ -24,8 +24,10 @@ Every request goes to `https://api.llmapi.ai/v1` with the same key. The plugin p
 | Everything else | Chat Completions, `/v1/chat/completions` | |
 
 The picker lists chat models from the LLM API catalog that support tool calling and have at least a 64K context
-window (Hermes' minimum). Context windows, reasoning levels and list prices come from the same catalog. A user
-`model_overrides` entry still wins over the catalog.
+window (Hermes' minimum). Context windows, image input, reasoning levels and list prices come from the same
+catalog, so Hermes sends images natively to models that read them and describes them as text for the rest. A
+user `model_overrides` entry still wins over the catalog. Catalog aliases work in `/model`
+(`claude-haiku-4.5` resolves to `claude-haiku-4-5`), and `/model --refresh` refetches the catalog.
 
 ## Errors
 
@@ -33,9 +35,11 @@ window (Hermes' minimum). Context windows, reasoning levels and list prices come
 |---|---|
 | `402 insufficient_credits`, `bonus_credits_not_applicable` | billing: stop and fall back |
 | `429 usage_limit_exceeded`, `org_monthly_cap_exceeded`, subscription budget exhausted | billing: retrying cannot help |
-| `403 provider_blocked`, `model_access_denied`, `org_model_not_allowed`, `rejected_not_in_plan` | model unavailable for this key: fall back to another model, keep the key |
+| `403 coding_model_requires_credits` | billing: the model needs paid credits |
+| `403 provider_blocked`, `model_access_denied`, `org_model_not_allowed`, `rejected_not_in_plan`, `email_verification_required`; `provider_key_required` (BYOK), `provider_unavailable` | model unavailable for this key: fall back to another model, keep the key |
+| `400 provider_no_responses_binding` | model not available on this API: fall back |
 | `403 organization_blocked`, `key_suspended_abuse`, `401 api_key_expired` | permanent auth failure |
-| `429 rate_limit_exceeded` | rate limit: retried after `Retry-After` |
+| `429 rate_limit_exceeded` | Hermes' own rate-limit handling: back off (`Retry-After`), then rotate the key or fall back |
 | `503 pool_exhausted` | overloaded: retried |
 | anything else | Hermes' built-in handling |
 
@@ -53,21 +57,31 @@ window (Hermes' minimum). Context windows, reasoning levels and list prices come
 | Variable | Default | |
 |---|---|---|
 | `LLMAPI_API_KEY` | | Your LLM API key. Required. |
-| `LLMAPI_BASE_URL` | `https://api.llmapi.ai/v1` | Another LLM API gateway, e.g. `https://eu.api.llmapi.ai/v1`. |
+| `LLMAPI_BASE_URL` | `https://api.llmapi.ai/v1` | Another LLM API gateway, e.g. `https://eu.api.llmapi.ai/v1`. The catalog, `/usage` and model requests all use it. |
 
-`hermes doctor` checks the key against `GET /v1/credits`.
+`hermes doctor` checks that the gateway is reachable. It cannot check the key: Hermes' doctor probes
+`/v1/models`, which is public. A bad key shows up as `401 invalid_api_key` on the first request and on `/usage`.
 
 ## What the plugin does on your machine
 
 - **Network.** All requests go to `api.llmapi.ai`, or to `LLMAPI_BASE_URL` if you set it:
-  - `GET /v1/models`: the public model catalog, sent without your key, at most once an hour.
-  - `GET /v1/credits`: your balance, sent with your key, only when you run `/usage`.
+  - `GET /v1/models`: the public model catalog, sent without your key, at most once an hour (a failed fetch
+    is retried after 5 minutes; until then the last good catalog is used).
+  - `GET /v1/credits`: your balance, sent with your key, when you run `/usage` or Hermes refreshes the
+    account usage shown in its model picker.
   - Model requests (`/v1/messages`, `/v1/responses`, `/v1/chat/completions`) are made by Hermes' own clients.
-    On the last two the plugin adds `X-Source: hermes-agent` and `X-LLMAPI-App-Id: hermes-provider-llmapi`
-    so LLM API can attribute the traffic. They carry no user data.
+    The first request of each user turn carries `X-Source: hermes-agent` and
+    `X-LLMAPI-App-Id: hermes-provider-llmapi`, used only to count traffic from this plugin. They carry no
+    user data.
 - **Files.** The plugin reads and writes no files. The catalog is cached in memory only.
 - **Credentials.** The key is read through Hermes (`agent.secret_scope`) and only sent to LLM API.
-- **Processes and telemetry.** None.
+- **Processes and telemetry.** No processes and no telemetry. A cold catalog is fetched once on a short-lived
+  background thread so Hermes never waits on it.
+
+## Known issues
+
+- Hermes does not replay Claude thinking blocks between tool calls on LLM API: it treats any
+  Anthropic-compatible host it does not know as a relay and strips them. Answers are unaffected.
 
 ## Development
 

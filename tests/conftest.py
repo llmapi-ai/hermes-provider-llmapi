@@ -64,6 +64,8 @@ class StubProviderProfile:
     default_aux_model: str = ""
     classify_api_error: Any = None
     default_headers: dict = field(default_factory=dict)
+    model_capabilities: dict = field(default_factory=dict)
+    setup_reasoning_efforts: Any = None
 
 
 @dataclass(frozen=True)
@@ -181,6 +183,7 @@ def plugin(monkeypatch, secrets, network):
     monkeypatch.setitem(sys.modules, spec.name, module)  # dataclasses resolve their module by name
     spec.loader.exec_module(module)
     module.registered = registered
+    monkeypatch.setattr(module, "_OPENER", types.SimpleNamespace(open=network))
     # A cold catalog warms in a background thread; tests drive the cache explicitly.
     monkeypatch.setattr(module.catalog, "warm", lambda: None)
     return module

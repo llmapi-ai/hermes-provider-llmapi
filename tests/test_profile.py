@@ -12,7 +12,8 @@ def test_registers_one_profile(profile, plugin):
     assert profile.aliases == ("llm-api",)
     assert profile.env_vars == ("LLMAPI_API_KEY", "LLMAPI_BASE_URL")
     assert profile.base_url == "https://api.llmapi.ai/v1"
-    assert profile.models_url == "https://api.llmapi.ai/v1/credits"
+    # No models_url: a non-default one makes Hermes accept only fallback_models in `/model`.
+    assert profile.models_url == ""
     assert profile.api_mode == "chat_completions"
     assert profile.classify_api_error is plugin.classify_gateway_error
     assert profile.fallback_models and all(isinstance(m, str) for m in profile.fallback_models)
@@ -78,14 +79,46 @@ def test_wire_per_model_without_catalog(profile, model, wire):
     assert profile.api_mode_for_model(model) == wire
 
 
-def test_wire_uses_catalog_family_and_responses_only(warm, profile):
-    from dataclasses import replace
+def test_wire_does_not_depend_on_the_catalog(plugin, profile):
+    models = ["claude-sonnet-5-5", "gpt-5.5", "kimi-k3", "gpt-4.1"]
+    cold = [profile.api_mode_for_model(m) for m in models]
+    plugin.catalog.store(CATALOG["data"])
+    assert [profile.api_mode_for_model(m) for m in models] == cold
 
-    info = warm.catalog.get("kimi-k3")
-    warm.catalog._models["kimi-k3"] = replace(info, responses_only=True)
-    warm.catalog._models["opus-alias"] = replace(info, id="opus-alias", family="anthropic")
-    assert profile.api_mode_for_model("kimi-k3") == "codex_responses"
-    assert profile.api_mode_for_model("opus-alias") == "anthropic_messages"
+
+def test_stale_catalog_beats_fallback_when_refresh_fails(plugin, profile, network, monkeypatch):
+    plugin.catalog.store(CATALOG["data"])
+    monkeypatch.setattr(plugin.catalog, "fresh", lambda: False)
+    network.routes["https://api.llmapi.ai/v1/models"] = OSError("down")
+    assert profile.fetch_models() == EXPECTED_PICKER
+    # Within the back-off window the next open does not wait on the network again.
+    assert profile.fetch_models() == EXPECTED_PICKER
+    assert len(network.requests) == 1
+
+
+def test_warm_up_uses_the_configured_gateway(plugin, network, secrets, monkeypatch):
+    secrets["LLMAPI_BASE_URL"] = "https://eu.api.llmapi.ai/v1"
+    started = []
+    monkeypatch.setattr(plugin.threading, "Thread", lambda target, **kw: started.append(target) or _NoThread())
+    network.routes["https://eu.api.llmapi.ai/v1/models"] = CATALOG
+    monkeypatch.setattr(plugin.catalog, "warm", plugin._Catalog.warm.__get__(plugin.catalog))  # undo the no-op
+    plugin.catalog.get("kimi-k3")
+    (run,) = started
+    run()
+    assert network.requests[0]["url"].startswith("https://eu.api.llmapi.ai/v1/models")
+    assert plugin.catalog.get("kimi-k3") is not None
+
+
+class _NoThread:
+    def start(self):
+        pass
+
+
+def test_live_context_length_loads_a_cold_catalog(profile, network):
+    network.routes["https://api.dev.llmapi.ai/v1/models"] = CATALOG
+    # Hermes passes the runtime base URL, which has no /v1 on the Anthropic wire.
+    assert profile.live_context_length("claude-sonnet-5-5", base_url="https://api.dev.llmapi.ai") == 1_000_000
+    assert "authorization" not in network.requests[0]["headers"]
 
 
 def test_context_window_from_catalog(warm, profile):
@@ -152,3 +185,65 @@ def test_attribution_headers_only_for_llmapi_hosts(profile, base_url, expected):
     headers = profile.request_headers(base_url=base_url, model="kimi-k3")
     assert (headers == {"X-Source": "hermes-agent", "X-LLMAPI-App-Id": "hermes-provider-llmapi"}) is expected
     assert expected or headers == {}
+
+
+def test_capabilities_mirror_the_catalog(warm, profile):
+    caps = profile.model_capabilities
+    assert caps["claude-sonnet-5-5"] == {
+        "supports_tools": True,
+        "supports_vision": True,
+        "supports_reasoning": True,
+        "context_window": 1_000_000,
+        "model_family": "anthropic",
+    }
+    # Text-only and no-reasoning models: Hermes summarises images and skips the effort prompt.
+    assert caps["gpt-oss-120b"]["supports_vision"] is False
+    assert caps["gpt-4.1"]["supports_reasoning"] is False
+    # Aliases resolve to the same entry; non-chat models are left to Hermes.
+    assert caps["claude-haiku-4.5"] == caps["claude-haiku-4-5"]
+    assert "azure/text-embedding-3-small" not in caps
+
+
+def test_capabilities_survive_a_failed_refresh(warm, profile, network):
+    warm.catalog.mark_stale()
+    network.routes["https://api.llmapi.ai/v1/models"] = OSError("down")
+    profile.fetch_models()
+    assert "claude-sonnet-5-5" in profile.model_capabilities
+
+
+@pytest.mark.parametrize(
+    ("typed", "expected"),
+    [
+        ("claude-haiku-4.5", "claude-haiku-4-5"),  # catalog alias
+        ("Claude-Haiku-4-5", "claude-haiku-4-5"),  # case
+        ("deepseek-v4.1-flash", "deepseek/deepseek-v4.1-flash"),
+        ("claude-haiku-4-5", None),  # already canonical
+        ("not-a-model", None),
+    ],
+)
+def test_normalize_model_id(warm, profile, typed, expected):
+    assert profile.normalize_model_id(typed) == expected
+
+
+def test_alias_lookups_reach_the_catalog_entry(warm, profile):
+    assert profile.get_model_context_length("claude-haiku-4.5") == 200_000
+
+
+def test_refresh_keeps_the_list_and_refetches(warm, profile, network):
+    network.routes["https://api.llmapi.ai/v1/models"] = CATALOG
+    profile.invalidate_catalog_cache()
+    assert profile.fetch_models() == EXPECTED_PICKER
+    assert len(network.requests) == 1
+
+
+def test_default_vision_model_reads_images_and_is_listed(warm, profile):
+    model = profile.default_vision_model()
+    assert model == profile.default_aux_model
+    assert model in EXPECTED_PICKER
+    assert profile.model_capabilities[model]["supports_vision"] is True
+
+
+def test_setup_reasoning_efforts(warm, profile):
+    assert profile.setup_reasoning_efforts("gpt-5.5") == ("none", "low", "medium", "high", "xhigh")
+    assert profile.setup_reasoning_efforts("gpt-4.1") == ()
+    assert profile.setup_reasoning_efforts("not-a-model") is None

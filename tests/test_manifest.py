@@ -56,3 +56,8 @@ def test_no_file_or_process_access():
     source = (PLUGIN_DIR / "__init__.py").read_text()
     for forbidden in (r"(?<![\w.])open\(", r"\bsubprocess\b", r"\bos\.", r"\bPath\(", r"\bsocket\b"):
         assert not re.search(forbidden, source), forbidden
+
+
+def test_catalog_readme_matches_the_repo_readme():
+    # The Hermes catalog page renders the README from the plugin subdir.
+    assert (PLUGIN_DIR / "README.md").read_text() == (ROOT / "README.md").read_text()

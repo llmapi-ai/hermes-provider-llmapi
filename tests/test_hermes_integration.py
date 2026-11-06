@@ -217,17 +217,19 @@ print(json.dumps({u: p.request_headers(base_url=u, model="kimi-k3")
 
 
 @pytest.mark.parametrize(
-    ("status", "code", "reason", "fallback"),
+    ("status", "code", "reason", "fallback", "rotate"),
     [
-        (402, "insufficient_credits", "billing", True),
-        (403, "provider_blocked", "model_entitlement", True),
-        (403, "rejected_not_in_plan", "model_entitlement", True),
-        (429, "rate_limit_exceeded", "rate_limit", False),
-        (429, "usage_limit_exceeded", "billing", True),
+        (402, "insufficient_credits", "billing", True, False),
+        # A 403 the key is not to blame for: fall back, never rotate the key.
+        (403, "provider_blocked", "model_entitlement", True, False),
+        (403, "rejected_not_in_plan", "model_entitlement", True, False),
+        # Deferred to Hermes: back off, then rotate or fall back.
+        (429, "rate_limit_exceeded", "rate_limit", True, True),
+        (429, "usage_limit_exceeded", "billing", True, False),
     ],
 )
 @pytest.mark.parametrize("sdk", ["openai", "anthropic"])
-def test_hermes_classifies_gateway_errors(home, sdk, status, code, reason, fallback):
+def test_hermes_classifies_gateway_errors(home, sdk, status, code, reason, fallback, rotate):
     found = _python(
         home,
         f"""
@@ -241,4 +243,4 @@ c = classify_api_error(err, provider="llmapi", model="kimi-k3", base_url="https:
 print(json.dumps({{"reason": c.reason.value, "fallback": c.should_fallback, "rotate": c.should_rotate_credential}}))
 """,
     )
-    assert found == {"reason": reason, "fallback": fallback, "rotate": False}
+    assert found == {"reason": reason, "fallback": fallback, "rotate": rotate}
