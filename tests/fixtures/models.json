@@ -1,0 +1,989 @@
+{
+  "data": [
+    {
+      "id": "azure/text-embedding-3-small",
+      "name": "Azure OpenAI Text Embedding 3 Small",
+      "kind": "embedding",
+      "family": "openai",
+      "context_length": 8192,
+      "pricing": {
+        "prompt": "0.00000002",
+        "completion": ""
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "embedding"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "azure",
+          "contextSize": 8192,
+          "tools": false,
+          "vision": false,
+          "reasoning": false
+        }
+      ]
+    },
+    {
+      "id": "claude-haiku-4-5",
+      "name": "Claude Haiku 4.5",
+      "kind": "chat",
+      "family": "anthropic",
+      "context_length": 200000,
+      "pricing": {
+        "prompt": "0.000001",
+        "completion": "0.000005",
+        "input_cache_read": "0.0000001",
+        "input_cache_write": "0.00000125",
+        "input_cache_write_1h": "0.000002",
+        "web_search": "0.01"
+      },
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "aliases": [
+        "claude-haiku-4.5"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "anthropic",
+          "contextSize": 200000,
+          "tools": true,
+          "vision": true,
+          "reasoning": false,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "aws-bedrock",
+          "contextSize": 200000,
+          "tools": true,
+          "vision": true,
+          "reasoning": false,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "max"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "name": "Claude Sonnet 5.5",
+      "kind": "chat",
+      "family": "anthropic",
+      "context_length": 1000000,
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.00001",
+        "input_cache_read": "0.0000001",
+        "input_cache_write": "0.0000025"
+      },
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_reasoning_level": "medium",
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "anthropic",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "aws-bedrock",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "computebase",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "kind": "chat",
+      "family": "deepseek-flash",
+      "context_length": 1000000,
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000012",
+        "input_cache_read": "0.000000006"
+      },
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_reasoning_level": "medium",
+      "aliases": [
+        "deepseek-v4.1-flash"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "novita",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "melious",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "alibaba",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "deepseek",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "boundless",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "togetherai",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gemini-3.5-flash-lite",
+      "name": "Gemini 3.5 Flash Lite",
+      "kind": "chat",
+      "family": "gemini-flash-lite",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000003",
+        "completion": "0.0000025",
+        "image": "0.0000003",
+        "audio_input": "0.0000003",
+        "input_cache_read": "0.00000003",
+        "input_cache_write": "0.0000000833333333",
+        "web_search": "0.014",
+        "internal_reasoning": "0.0000025"
+      },
+      "reasoning_levels": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_reasoning_level": "medium",
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image",
+          "video",
+          "audio"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "google-ai-studio",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "minimal",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "providerId": "google-vertex",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "minimal",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "providerId": "novita",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "minimal",
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gpt-4.1",
+      "name": "GPT-4.1",
+      "kind": "chat",
+      "family": "openai",
+      "context_length": 1000000,
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.000008",
+        "input_cache_read": "0.0000005"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "openai",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": false,
+          "supportsResponsesApi": true
+        }
+      ]
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "name": "GPT-5.4 Mini",
+      "kind": "chat",
+      "family": "openai",
+      "context_length": 400000,
+      "pricing": {
+        "prompt": "0.00000075",
+        "completion": "0.0000045",
+        "input_cache_read": "0.00000007",
+        "web_search": "0.01"
+      },
+      "reasoning_levels": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "azure",
+          "contextSize": 400000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true
+        },
+        {
+          "providerId": "openai",
+          "contextSize": 400000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true
+        }
+      ]
+    },
+    {
+      "id": "gpt-5.5",
+      "name": "GPT-5.5",
+      "kind": "chat",
+      "family": "openai",
+      "context_length": 1050000,
+      "pricing": {
+        "prompt": "0.000005",
+        "completion": "0.00003",
+        "input_cache_read": "0.0000005",
+        "web_search": "0.014"
+      },
+      "reasoning_levels": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "azure",
+          "contextSize": 1050000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true,
+          "responsesOnly": true
+        },
+        {
+          "providerId": "openai",
+          "contextSize": 1050000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true,
+          "responsesOnly": true
+        }
+      ]
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "kind": "chat",
+      "family": "gpt-sol",
+      "context_length": 1050000,
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.00001",
+        "input_cache_read": "0.0000001",
+        "input_cache_write": "0.0000025",
+        "web_search": "0.01"
+      },
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_reasoning_level": "medium",
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "openai",
+          "contextSize": 1050000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "supportsResponsesApi": true
+        },
+        {
+          "providerId": "novita",
+          "contextSize": 1050000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        {
+          "providerId": "azure",
+          "contextSize": 1050000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true,
+          "responsesOnly": true
+        }
+      ]
+    },
+    {
+      "id": "gpt-oss-120b",
+      "name": "GPT OSS 120B",
+      "kind": "chat",
+      "family": "openai",
+      "context_length": 131072,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000006"
+      },
+      "reasoning_levels": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "aws-bedrock",
+          "contextSize": 131072,
+          "tools": true,
+          "vision": false,
+          "reasoning": false,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "providerId": "cerebras",
+          "contextSize": 131072,
+          "tools": true,
+          "vision": false,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        {
+          "providerId": "togetherai",
+          "contextSize": 131072,
+          "tools": true,
+          "vision": false,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kimi-k3",
+      "name": "Kimi K3",
+      "kind": "chat",
+      "family": "moonshot",
+      "context_length": 1000000,
+      "pricing": {
+        "prompt": "0.000003",
+        "completion": "0.000015",
+        "input_cache_read": "0.0000003"
+      },
+      "reasoning_levels": [
+        "max"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "moonshot",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "canopywave",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "max"
+          ]
+        },
+        {
+          "providerId": "novita",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "togetherai",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "nebius",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "low",
+            "medium",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "alibaba",
+          "contextSize": 1048576,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "high",
+            "max"
+          ]
+        },
+        {
+          "providerId": "melious",
+          "contextSize": 1000000,
+          "tools": true,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o3",
+      "name": "o3",
+      "kind": "chat",
+      "family": "openai",
+      "context_length": 200000,
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.000008"
+      },
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "openai",
+          "contextSize": 200000,
+          "tools": false,
+          "vision": true,
+          "reasoning": true,
+          "reasoningLevels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "supportsResponsesApi": true
+        }
+      ]
+    },
+    {
+      "id": "qwen3-235b-a22b-fp8",
+      "name": "Qwen3 235B A22B FP8",
+      "kind": "chat",
+      "family": "alibaba",
+      "context_length": 40960,
+      "pricing": {
+        "prompt": "0.0000002",
+        "completion": "0.0000008"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "novita",
+          "contextSize": 40960,
+          "tools": true,
+          "vision": false,
+          "reasoning": false
+        }
+      ]
+    },
+    {
+      "id": "eleven_v3",
+      "name": "Eleven v3",
+      "family": "tts",
+      "pricing": {
+        "prompt": "0.08",
+        "completion": "0"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "audio"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "elevenlabs",
+          "tools": false,
+          "vision": false,
+          "reasoning": false
+        }
+      ]
+    },
+    {
+      "id": "qwen-image-max",
+      "name": "Qwen Image Max",
+      "kind": "image",
+      "family": "image",
+      "pricing": {
+        "prompt": "",
+        "completion": "0",
+        "image_generation": "0.075"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "image"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "alibaba",
+          "contextSize": 2000,
+          "tools": true,
+          "vision": false,
+          "reasoning": false
+        }
+      ]
+    },
+    {
+      "id": "custom",
+      "name": "Custom Model",
+      "family": "llmapi",
+      "pricing": {
+        "prompt": "0",
+        "completion": "0",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "llmapi",
+          "tools": true,
+          "vision": true,
+          "reasoning": false
+        }
+      ]
+    },
+    {
+      "id": "auto",
+      "name": "Auto Route",
+      "family": "llmapi",
+      "pricing": {
+        "prompt": "0",
+        "completion": "0",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "reasoning_levels": [],
+      "architecture": {
+        "tokenizer": "GPT",
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "providers": [
+        {
+          "providerId": "llmapi",
+          "tools": true,
+          "vision": true,
+          "reasoning": false
+        }
+      ]
+    }
+  ]
+}

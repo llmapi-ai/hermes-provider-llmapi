@@ -1,0 +1,62 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * *"  # daily: catch Hermes changes that break the plugin
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: unit (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -v
+
+  hermes:
+    name: end-to-end (Hermes ${{ matrix.ref }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ref: v0.22.6  # the floor in requires_hermes
+            sync: --group dev
+          - ref: main
+            sync: --group dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: NousResearch/hermes-agent
+          ref: ${{ matrix.ref }}
+          path: hermes
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Hermes
+        working-directory: hermes
+        run: uv sync --frozen ${{ matrix.sync }} --extra anthropic
+      - name: Test dependencies
+        run: uv pip install --python hermes/.venv/bin/python pytest pyyaml
+      - name: Tests against Hermes
+        env:
+          PYTHONPATH: ${{ github.workspace }}/hermes
+        run: hermes/.venv/bin/python -m pytest -v tests
+      - name: hermes plugins validate
+        env:
+          HERMES_HOME: ${{ runner.temp }}/hermes-home
+        run: hermes/.venv/bin/hermes plugins validate llmapi --install-deps

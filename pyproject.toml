@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-provider-llmapi"
+version = "0.1.0"
+description = "LLM API model-provider plugin for Hermes Agent"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "LLM API", email = "support@llmapi.ai" }]
+keywords = ["hermes-agent", "hermes-plugin", "model-provider", "llmapi", "llm", "gateway"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/llmapi-ai/hermes-provider-llmapi"
+Issues = "https://github.com/llmapi-ai/hermes-provider-llmapi/issues"
+"LLM API" = "https://llmapi.ai"
+
+# Hermes discovers pip-installed providers through this group; the module
+# self-registers on import. Enable it with `plugins.enabled: [llmapi]`.
+[project.entry-points."hermes_agent.plugins"]
+llmapi = "llmapi"
+
+[tool.setuptools]
+packages = ["llmapi"]
+
+[tool.setuptools.package-data]
+llmapi = ["plugin.yaml", "after-install.md"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pyyaml>=6", "ruff>=0.8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
