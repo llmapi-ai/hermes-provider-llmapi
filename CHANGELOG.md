@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Claude on `/v1/messages`: a 403 `permission_error` (the organization blocks the provider, or the key's model
+  rules deny the model) now falls back to another model and keeps the key. Hermes read it as a bad key.
+- `key_ip_restricted` maps to a permanent auth failure and `tenant_quota_exhausted` to billing.
+- Catalog entries without a `kind` that take text and return text count as chat models.
+
 ## 0.1.0
 
 First release.

@@ -34,11 +34,11 @@ user `model_overrides` entry still wins over the catalog. Catalog aliases work i
 | LLM API error | Hermes treats it as |
 |---|---|
 | `402 insufficient_credits`, `bonus_credits_not_applicable` | billing: stop and fall back |
-| `429 usage_limit_exceeded`, `org_monthly_cap_exceeded`, subscription budget exhausted | billing: retrying cannot help |
+| `429 usage_limit_exceeded`, `org_monthly_cap_exceeded`, `tenant_quota_exhausted`, subscription budget exhausted | billing: retrying cannot help |
 | `403 coding_model_requires_credits` | billing: the model needs paid credits |
-| `403 provider_blocked`, `model_access_denied`, `org_model_not_allowed`, `rejected_not_in_plan`, `email_verification_required`; `provider_key_required` (BYOK), `provider_unavailable` | model unavailable for this key: fall back to another model, keep the key |
+| `403 provider_blocked`, `model_access_denied`, `org_model_not_allowed`, `rejected_not_in_plan`, `email_verification_required`; `provider_key_required` (BYOK), `provider_unavailable`; on `/v1/messages`, a `403 permission_error` | model unavailable for this key: fall back to another model, keep the key |
 | `400 provider_no_responses_binding` | model not available on this API: fall back |
-| `403 organization_blocked`, `key_suspended_abuse`, `401 api_key_expired` | permanent auth failure |
+| `403 organization_blocked`, `key_suspended_abuse`, `key_ip_restricted`, `401 api_key_expired` | permanent auth failure |
 | `429 rate_limit_exceeded` | Hermes' own rate-limit handling: back off (`Retry-After`), then rotate the key or fall back |
 | `503 pool_exhausted` | overloaded: retried |
 | anything else | Hermes' built-in handling |

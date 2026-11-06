@@ -34,7 +34,7 @@ from urllib.parse import urlparse
 from providers import register_provider
 from providers.base import ProviderProfile
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,15 @@ class ModelInfo:
     prices: dict[str, Decimal]  # USD per token: prompt, completion, input_cache_read, input_cache_write
 
 
+def _kind(kind: Any, architecture: dict) -> str:
+    """The catalog kind; the gateway omits it when empty, so text in and text out is chat."""
+    if kind:
+        return str(kind)
+    inputs = architecture.get("input_modalities") or ()
+    outputs = architecture.get("output_modalities") or ()
+    return "chat" if "text" in inputs and list(outputs) == ["text"] else ""
+
+
 def parse_model(entry: Any) -> ModelInfo | None:
     """One catalog entry, or None when it is not a usable object."""
     if not isinstance(entry, dict) or not isinstance(entry.get("id"), str) or not entry["id"]:
@@ -116,7 +125,7 @@ def parse_model(entry: Any) -> ModelInfo | None:
     }
     return ModelInfo(
         id=entry["id"],
-        kind=str(entry.get("kind") or ""),
+        kind=_kind(entry.get("kind"), architecture),
         family=str(entry.get("family") or ""),
         aliases=tuple(a for a in entry.get("aliases") or () if isinstance(a, str) and a),
         context_length=context if type(context) is int and context > 0 else 0,
@@ -409,11 +418,13 @@ def estimated_cost(info: ModelInfo, usage: Any) -> Decimal | None:
 
 # ── Errors ───────────────────────────────────────────────────────────────
 #
-# The gateway answers errors in an OpenAI-shaped envelope on every wire:
+# The gateway answers most errors in an OpenAI-shaped envelope on every wire:
 #   {"error": {"message": "...", "type": "...", "code": "<code>", "param": ...}}
 # Hermes extracts ``error.code``. Codes not listed defer to Hermes' built-in
 # classifier: 401 invalid key, 404 model_not_found, 413, 5xx upstream errors,
 # and 429 rate_limit_exceeded (backoff with Retry-After, then rotate/fall back).
+# /v1/messages writes some 403s in the Anthropic envelope without a code (see
+# ``classify_gateway_error``).
 
 _BILLING = {"reason": "billing", "retryable": False, "should_fallback": True}
 # The key is fine but cannot use this model: an org provider block, the key's
@@ -447,7 +458,10 @@ ERROR_RULES: dict[str, dict[str, Any]] = {
     # 401/403: the key or organization cannot be used at all.
     "organization_blocked": _BLOCKED,
     "key_suspended_abuse": _BLOCKED,
+    "key_ip_restricted": _BLOCKED,  # the key may not be used from this IP address
     "api_key_expired": _BLOCKED,
+    # 429: the tenant's invoiced quota for this key is spent; no Retry-After.
+    "tenant_quota_exhausted": _BILLING,
     # 503: every upstream credential for the model is busy, or billing is briefly unreachable.
     "pool_exhausted": _OVERLOADED,
     "billing_unavailable": _SERVER_ERROR,
@@ -473,7 +487,23 @@ def classify_gateway_error(
     if code.startswith("rejected_model_budget_exhausted"):
         return dict(_BILLING)
     verdict = ERROR_RULES.get(code)
-    return dict(verdict) if verdict else None
+    if verdict:
+        return dict(verdict)
+    # /v1/messages answers an org provider block or the key's model rules with
+    # {"type": "error", "error": {"type": "permission_error", ...}} and no code;
+    # Hermes then reports the type as the code. Every key-level 403 carries a code.
+    if status_code == 403 and (code or _error_type(body)) == "permission_error":
+        return dict(_NOT_ENTITLED)
+    return None
+
+
+def _error_type(body: Any) -> str:
+    """``error.type`` of an error body, whether or not the SDK unwrapped ``error``."""
+    if not isinstance(body, dict):
+        return ""
+    inner = body.get("error")
+    source = inner if isinstance(inner, dict) else body
+    return str(source.get("type") or "").strip().lower()
 
 
 # ── /usage ───────────────────────────────────────────────────────────────

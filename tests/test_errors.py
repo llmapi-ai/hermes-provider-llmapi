@@ -26,6 +26,8 @@ BLOCKED = {"reason": "auth_permanent", "retryable": False, "should_fallback": Fa
         (403, "organization_blocked", BLOCKED),
         (403, "key_suspended_abuse", BLOCKED),
         (401, "api_key_expired", BLOCKED),
+        (403, "key_ip_restricted", BLOCKED),
+        (429, "tenant_quota_exhausted", BILLING),
         (503, "pool_exhausted", {"reason": "overloaded", "retryable": True}),
         (503, "billing_unavailable", {"reason": "server_error", "retryable": True}),
         (402, "INSUFFICIENT_CREDITS", BILLING),
@@ -46,6 +48,36 @@ def test_gateway_codes(profile, status, code, expected):
         Exception("x"), status_code=status, error_code=code, message="x", body=body, model="kimi-k3"
     )
     assert verdict == expected
+
+
+# /v1/messages answers an org provider block or the key's model rules in the
+# Anthropic envelope, without error.code; Hermes then reports error.type.
+MESSAGES_DENIAL = {"type": "error", "error": {"type": "permission_error", "message": "Provider anthropic is blocked"}}
+
+
+@pytest.mark.parametrize("code", ["permission_error", "PERMISSION_ERROR", None, ""])
+def test_codeless_messages_denial_keeps_the_key(profile, code):
+    verdict = profile.classify_api_error(
+        Exception("x"), status_code=403, error_code=code, message="x", body=MESSAGES_DENIAL, model="claude-sonnet-5-5"
+    )
+    assert verdict == NOT_ENTITLED
+
+
+def test_codeless_messages_denial_without_a_body(profile):
+    verdict = profile.classify_api_error(None, status_code=403, error_code="permission_error", message="x", body=None)
+    assert verdict == NOT_ENTITLED
+
+
+@pytest.mark.parametrize(
+    ("status", "code", "body"),
+    [
+        (401, "permission_error", MESSAGES_DENIAL),  # only a 403 is a denial
+        (403, "authentication_error", {"type": "error", "error": {"type": "authentication_error", "message": "x"}}),
+        (403, None, None),
+    ],
+)
+def test_other_codeless_errors_defer_to_hermes(profile, status, code, body):
+    assert profile.classify_api_error(None, status_code=status, error_code=code, message="x", body=body) is None
 
 
 @pytest.mark.parametrize(

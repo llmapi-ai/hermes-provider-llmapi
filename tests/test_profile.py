@@ -34,6 +34,23 @@ def test_picker_lists_tool_capable_chat_models_with_enough_context(profile, netw
     assert request["headers"]["user-agent"].startswith("hermes-provider-llmapi/")
 
 
+def test_chat_model_without_a_kind_is_still_listed(plugin):
+    # The gateway omits an empty kind: a text-in, text-out entry is a chat model.
+    entry = {
+        "id": "new-model",
+        "context_length": 200_000,
+        "providers": [{"tools": True}],
+        "architecture": {"input_modalities": ["text", "image"], "output_modalities": ["text"]},
+    }
+    assert plugin.listed_in_picker(plugin.parse_model(entry))
+    # Speech models without a kind stay out.
+    stt = {**entry, "architecture": {"input_modalities": ["audio"], "output_modalities": ["text"]}}
+    tts = {**entry, "architecture": {"input_modalities": ["text"], "output_modalities": ["audio"]}}
+    assert not plugin.listed_in_picker(plugin.parse_model(stt))
+    assert not plugin.listed_in_picker(plugin.parse_model(tts))
+    assert not plugin.listed_in_picker(plugin.parse_model({**entry, "kind": "embedding"}))
+
+
 def test_picker_is_cached(profile, network):
     network.routes["https://api.llmapi.ai/v1/models"] = CATALOG
     profile.fetch_models()

@@ -244,3 +244,21 @@ print(json.dumps({{"reason": c.reason.value, "fallback": c.should_fallback, "rot
 """,
     )
     assert found == {"reason": reason, "fallback": fallback, "rotate": rotate}
+
+
+def test_hermes_keeps_the_key_on_a_codeless_messages_denial(home):
+    """/v1/messages sends provider blocks and key model rules in the Anthropic envelope, with no code."""
+    found = _python(
+        home,
+        """
+import json, httpx, anthropic
+from agent.error_classifier import classify_api_error
+body = {"type": "error", "error": {"type": "permission_error", "message": "Provider anthropic is blocked"}}
+req = httpx.Request("POST", "https://api.llmapi.ai/v1/messages")
+resp = httpx.Response(403, json=body, request=req)
+err = anthropic.PermissionDeniedError("Provider anthropic is blocked", response=resp, body=body)
+c = classify_api_error(err, provider="llmapi", model="claude-sonnet-5-5", base_url="https://api.llmapi.ai")
+print(json.dumps({"reason": c.reason.value, "fallback": c.should_fallback, "rotate": c.should_rotate_credential}))
+""",
+    )
+    assert found == {"reason": "model_entitlement", "fallback": True, "rotate": False}

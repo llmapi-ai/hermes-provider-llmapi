@@ -1,6 +1,6 @@
 name: llmapi
 kind: model-provider
-version: 0.1.0
+version: 0.1.1
 description: >-
   LLM API: Claude, GPT, Gemini, Kimi, DeepSeek and more on one key. Claude runs on the
   Anthropic Messages API with prompt caching, GPT-5 and later on the Responses API.
