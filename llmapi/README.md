@@ -78,11 +78,6 @@ user `model_overrides` entry still wins over the catalog. Catalog aliases work i
 - **Processes and telemetry.** No processes and no telemetry. A cold catalog is fetched once on a short-lived
   background thread so Hermes never waits on it.
 
-## Known issues
-
-- Hermes does not replay Claude thinking blocks between tool calls on LLM API: it treats any
-  Anthropic-compatible host it does not know as a relay and strips them. Answers are unaffected.
-
 ## Development
 
 ```bash
